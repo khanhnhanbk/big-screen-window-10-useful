@@ -1,0 +1,53 @@
+# Builds WindowHelper on GitHub's servers when a version tag (v1.2.3) is pushed,
+# attaches the exes + SHA-256 checksums to a GitHub Release, and records a signed
+# build-provenance attestation so users can verify the files came from this repo.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write      # create the release
+  id-token: write      # sign the attestation (Sigstore)
+  attestations: write  # store the attestation
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          dotnet publish -c Release -r win-x64 --self-contained false `
+            -p:PublishSingleFile=true -p:Version=$version -o out/fd
+          dotnet publish -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true -p:Version=$version -o out/sc
+
+          New-Item -ItemType Directory dist | Out-Null
+          Copy-Item out/fd/WindowHelper.exe dist/WindowHelper.exe
+          Copy-Item out/sc/WindowHelper.exe dist/WindowHelper-standalone.exe
+          Get-ChildItem dist/*.exe | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Set-Content dist/SHA256SUMS.txt -Encoding ascii
+          Get-Content dist/SHA256SUMS.txt
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.exe
+
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" dist/* `
+            --title "WindowHelper ${{ github.ref_name }}" --generate-notes
