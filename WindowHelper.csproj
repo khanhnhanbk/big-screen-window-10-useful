@@ -10,7 +10,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>WindowHelper</AssemblyName>
     <RootNamespace>WindowHelper</RootNamespace>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>WindowHelper</Product>
     <Description>Window zones and Find My Mouse for Windows</Description>
     <Copyright>Copyright (c) 2026 khanhnhanbk</Copyright>

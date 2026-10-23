@@ -65,6 +65,17 @@ internal sealed class SnapController : NativeWindow, IDisposable
     {
         if (_dragHwnd == IntPtr.Zero) return;
 
+        // No mouse button held: not a real mouse drag (keyboard move, or a missed MOVESIZEEND).
+        // GetAsyncKeyState reads physical buttons, so check both in case they are swapped.
+        if (!Native.IsKeyDown(Native.VK_LBUTTON) && !Native.IsKeyDown(Native.VK_RBUTTON))
+        {
+            _dragTimer.Stop();
+            _overlay.Hide();
+            _dragHwnd = IntPtr.Zero;
+            _dragZone = Rectangle.Empty;
+            return;
+        }
+
         if (!Native.IsKeyDown(Native.VK_SHIFT))
         {
             _dragZone = Rectangle.Empty;

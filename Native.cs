@@ -18,6 +18,8 @@ internal static class Native
     public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
 
     // Keys
+    public const int VK_LBUTTON = 0x01;
+    public const int VK_RBUTTON = 0x02;
     public const int VK_SHIFT = 0x10;
     public const int VK_LCONTROL = 0xA2;
     public const int VK_RCONTROL = 0xA3;
